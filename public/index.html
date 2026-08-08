@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¿Cuánto necesitas? — Calculadora de examen final</title>
+<meta name="description" content="Calcula cuánto necesitas sacarte en el examen final para aprobar cada materia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EDF1F7;
+    --paper-line: #C7D2E3;
+    --ink: #16213E;
+    --ink-soft: #4B5A7D;
+    --red-pen: #C23B22;
+    --red-pen-soft: #E2624A;
+    --highlight: #FFD64D;
+    --green-ok: #2F6F4F;
+    --card-bg: #FFFFFF;
+    --radius: 10px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    font-family:'Space Grotesk', sans-serif;
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    min-height: 100vh;
+    padding: 32px 16px 80px;
+  }
+
+  .wrap{
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  header{
+    margin-bottom: 36px;
+    position: relative;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--red-pen);
+    border: 1.5px dashed var(--red-pen-soft);
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+
+  h1{
+    font-size: clamp(32px, 5vw, 48px);
+    line-height: 1.05;
+    margin: 0 0 10px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  h1 span{
+    color: var(--red-pen);
+    text-decoration: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: var(--highlight);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 6px;
+  }
+
+  header p.sub{
+    font-size: 16px;
+    color: var(--ink-soft);
+    max-width: 560px;
+    margin: 0;
+  }
+
+  .settings{
+    display:flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+  .settings label{
+    background: var(--card-bg);
+    border: 1px solid var(--paper-line);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    color: var(--ink-soft);
+  }
+  .settings input{
+    width: 52px;
+    border: none;
+    background: transparent;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    border-bottom: 2px solid var(--highlight);
+    text-align: center;
+  }
+  .settings input:focus{ outline:none; border-bottom-color: var(--red-pen); }
+
+  #filas{
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .fila{
+    background: var(--card-bg);
+    border: 1px solid var(--paper-line);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: 1.4fr 0.8fr 0.8fr 1.6fr auto;
+    gap: 16px;
+    align-items: center;
+    position: relative;
+    box-shadow: 0 1px 0 rgba(22,33,62,0.03);
+  }
+
+  @media (max-width: 760px){
+    .fila{ grid-template-columns: 1fr 1fr; grid-template-areas:
+      "materia materia"
+      "cortes asist"
+      "resultado resultado"
+      "borrar borrar"; }
+    .fila .campo-materia{ grid-area: materia; }
+    .fila .campo-cortes{ grid-area: cortes; }
+    .fila .campo-asist{ grid-area: asist; }
+    .fila .resultado{ grid-area: resultado; }
+    .fila .borrar{ grid-area: borrar; justify-self: end; }
+  }
+
+  .campo label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+
+  .campo input[type="text"]{
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid var(--paper-line);
+    background: transparent;
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    padding: 4px 2px;
+  }
+  .campo input[type="text"]:focus{ outline:none; border-bottom-color: var(--red-pen); }
+
+  .campo input[type="number"]{
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid var(--paper-line);
+    background: transparent;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    padding: 4px 2px;
+  }
+  .campo input[type="number"]:focus{ outline:none; border-bottom-color: var(--red-pen); }
+
+  .resultado{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 40px;
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+
+  .resultado .num{
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .estado-pendiente .num{ color: var(--red-pen); }
+  .estado-aprobado .num{ color: var(--green-ok); }
+  .estado-imposible .num{ color: var(--ink-soft); }
+
+  .aviso-asistencia{
+    font-size: 11px;
+    color: var(--red-pen);
+    font-family:'Space Grotesk', sans-serif;
+    font-weight: 600;
+  }
+
+  .borrar{
+    background: none;
+    border: 1px solid var(--paper-line);
+    color: var(--ink-soft);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: all 0.15s ease;
+  }
+  .borrar:hover{ background: var(--red-pen); border-color: var(--red-pen); color:#fff; }
+
+  .agregar{
+    margin-top: 18px;
+    background: var(--card-bg);
+    border: 1.5px dashed var(--paper-line);
+    border-radius: 14px;
+    padding: 14px;
+    width: 100%;
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .agregar:hover{ border-color: var(--red-pen); color: var(--red-pen); background: #fff8f6; }
+
+  /* --- sello de goma --- */
+  .sello{
+    font-family: 'Kalam', cursive;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--red-pen);
+    border: 3px solid var(--red-pen);
+    border-radius: 8px;
+    padding: 4px 10px;
+    display: inline-block;
+    transform: rotate(-6deg) scale(0);
+    opacity: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    animation: sellar 0.35s ease forwards;
+    white-space: nowrap;
+  }
+  .sello.ok{ color: var(--green-ok); border-color: var(--green-ok); transform: rotate(4deg) scale(0); }
+  .sello.imposible{ color: var(--ink-soft); border-color: var(--ink-soft); transform: rotate(-3deg) scale(0); }
+
+  @keyframes sellar{
+    0%{ transform: rotate(-14deg) scale(1.8); opacity: 0; }
+    60%{ transform: rotate(-6deg) scale(0.92); opacity: 1; }
+    100%{ transform: rotate(-6deg) scale(1); opacity: 1; }
+  }
+  .sello.ok{ animation-name: sellarOk; }
+  @keyframes sellarOk{
+    0%{ transform: rotate(10deg) scale(1.8); opacity: 0; }
+    60%{ transform: rotate(4deg) scale(0.92); opacity: 1; }
+    100%{ transform: rotate(4deg) scale(1); opacity: 1; }
+  }
+
+  footer{
+    margin-top: 44px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .sello{ animation: none; transform: none; opacity: 1; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="eyebrow">calculadora extraoficial</span>
+      <h1>¿Cuánto <span>necesitas</span> sacarte?</h1>
+      <p class="sub">Ingresa la nota que llevas en tus cortes y calcula al instante cuánto te falta en el examen final para pasar cada materia.</p>
+
+      <div class="settings">
+        <label>Nota mínima para aprobar
+          <input type="number" id="notaMinima" value="7" min="1" max="10" step="0.1">
+          <span>/ 10</span>
+        </label>
+        <label>Asistencia mínima
+          <input type="number" id="asistMinima" value="70" min="0" max="100" step="1">
+          <span>%</span>
+        </label>
+      </div>
+    </header>
+
+    <div id="filas"></div>
+
+    <button class="agregar" id="btnAgregar" type="button">+ agregar otra materia</button>
+
+    <footer>
+      hecho por y para estudiantes · el resultado es una guía, revisa siempre tu nota oficial en el sistema de tu universidad
+    </footer>
+  </div>
+
+<script>
+  const filasEl = document.getElementById('filas');
+  const notaMinimaEl = document.getElementById('notaMinima');
+  const asistMinimaEl = document.getElementById('asistMinima');
+  const btnAgregar = document.getElementById('btnAgregar');
+
+  let contador = 0;
+
+  function crearFila(materia = '') {
+    contador++;
+    const id = contador;
+    const fila = document.createElement('div');
+    fila.className = 'fila';
+    fila.dataset.id = id;
+    fila.innerHTML = `
+      <div class="campo campo-materia">
+        <label>Materia</label>
+        <input type="text" class="in-materia" placeholder="Ej. Cálculo Diferencial" value="${materia}">
+      </div>
+      <div class="campo campo-cortes">
+        <label>Cortes (sobre 7)</label>
+        <input type="number" class="in-cortes" min="0" max="7" step="0.01" placeholder="0.0">
+      </div>
+      <div class="campo campo-asist">
+        <label>Asistencia %</label>
+        <input type="number" class="in-asist" min="0" max="100" step="1" placeholder="0">
+      </div>
+      <div class="resultado" data-resultado></div>
+      <button class="borrar" type="button" title="Quitar materia">✕</button>
+    `;
+    filasEl.appendChild(fila);
+
+    fila.querySelector('.borrar').addEventListener('click', () => {
+      fila.remove();
+    });
+
+    fila.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', () => calcularFila(fila));
+    });
+
+    calcularFila(fila);
+  }
+
+  function calcularFila(fila) {
+    const cortes = parseFloat(fila.querySelector('.in-cortes').value);
+    const asist = parseFloat(fila.querySelector('.in-asist').value);
+    const notaMinima = parseFloat(notaMinimaEl.value) || 7;
+    const asistMinima = parseFloat(asistMinimaEl.value) || 70;
+    const resultadoEl = fila.querySelector('[data-resultado]');
+
+    resultadoEl.className = 'resultado';
+
+    if (isNaN(cortes)) {
+      resultadoEl.innerHTML = `<span style="color:var(--ink-soft)">ingresa tu nota de cortes</span>`;
+      return;
+    }
+
+    let avisoAsistencia = '';
+    if (!isNaN(asist) && asist < asistMinima) {
+      avisoAsistencia = `<div class="aviso-asistencia">⚠ asistencia bajo el ${asistMinima}% mínimo</div>`;
+    }
+
+    if (cortes >= notaMinima) {
+      resultadoEl.classList.add('estado-aprobado');
+      resultadoEl.innerHTML = `<span class="sello ok">ya aprobaste</span>${avisoAsistencia}`;
+      return;
+    }
+
+    if (cortes < 0 || cortes > notaMinima + 3) {
+      // fuera de rango razonable, no calculamos
+      resultadoEl.innerHTML = `<span style="color:var(--ink-soft)">revisa el valor de cortes</span>`;
+      return;
+    }
+
+    const examenFinal = (notaMinima - cortes) / 0.30;
+
+    if (examenFinal > 10) {
+      resultadoEl.classList.add('estado-imposible');
+      resultadoEl.innerHTML = `
+        <span class="sello imposible">ya no alcanza</span>
+        <span>necesitarías ${examenFinal.toFixed(2)}/10</span>
+        ${avisoAsistencia}
+      `;
+      return;
+    }
+
+    const notaFinal = cortes + examenFinal * 0.30;
+    resultadoEl.classList.add('estado-pendiente');
+    resultadoEl.innerHTML = `
+      <span class="num">${examenFinal.toFixed(2)}</span>
+      <span>/10 en el examen · nota final ${notaFinal.toFixed(2)}</span>
+      ${avisoAsistencia}
+    `;
+  }
+
+  function recalcularTodo() {
+    document.querySelectorAll('.fila').forEach(calcularFila);
+  }
+
+  notaMinimaEl.addEventListener('input', recalcularTodo);
+  asistMinimaEl.addEventListener('input', recalcularTodo);
+  btnAgregar.addEventListener('click', () => crearFila());
+
+  // arranca con una fila vacía lista para usar
+  crearFila('');
+</script>
+</body>
+</html>
