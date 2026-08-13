@@ -11,7 +11,7 @@
  *      para sacar nota final y asistencia directamente.
  *   3. Busca el título de la materia unas líneas arriba de ese patrón.
  *
- * Todo corre en el navegador del estudiante — la imagen nunca se sube
+ * por si estas revisando el code, todo corre en el navegador del estudiante — la imagen nunca se sube
  * a ningún servidor.
  */
 
@@ -19,9 +19,9 @@ const OCR = (() => {
 
   const PALABRAS_IGNORAR = [
     "EN CURSO", "CURSO", "TEC-INF", "NIVEL", "PARALELO", "MIN.", "NOTA", "FINAL",
-    "ASISTENCIA", "HAD", "HPS", "HAS", "FINALIZADO", "APROBADO"
+    "ASISTENCIA", "FINALIZADO", "APROBADO"
   ];
-
+  
   function normalizar(txt) {
     return txt.trim().toUpperCase();
   }
@@ -122,7 +122,7 @@ const OCR = (() => {
     return /\d{2}-\d{2}-\d{4}/.test(linea) ||
       /\bMPS\d?\b/i.test(linea) ||
       /\bMASA\b/i.test(linea) ||
-      /\bHAD\b|\bHPS\b|\bHAS\b/i.test(linea);
+      /\b(HAD|HPS|HAS)\s*\d/i.test(linea); // exige un número después (código real de horario)
   }
 
   function buscarTituloArriba(lineas, indice, maxSaltos) {
@@ -141,23 +141,31 @@ const OCR = (() => {
     return partes.join(" ").trim();
   }
 
-  // busca en cada línea el patrón "número decimal ... número%" (nota final + asistencia juntos)
+  // se ancla en la etiqueta "NOTA FINAL" (confiable) y busca el número
+  // decimal y el porcentaje en las líneas cercanas, en cualquier orden
   function extraerMateriasDeLineas(lineas) {
-    const regexCombinado = /(\d{1,2}[.,]\d{1,2})\D{0,15}?(\d{1,3})\s*%/;
+    const regexDecimal = /(\d{1,2}[.,]\d{1,2})/;
+    const regexPorcentajeAsistencia = /(?<!\/)(?<!\/\s)(\d{1,3})\s*%/;
     const materias = [];
 
     lineas.forEach((linea, i) => {
-      if (/\d{2}-\d{2}-\d{4}/.test(linea)) return; // evita fechas tipo 04-05-2026
-      const m = linea.match(regexCombinado);
-      if (!m) return;
+      if (!/NOTA\s*FINAL/i.test(linea)) return;
 
-      const notaFinalRaw = m[1].replace(",", ".");
-      const asistenciaRaw = m[2];
+      const inicio = Math.max(0, i - 6);
+      const fin = Math.min(lineas.length, i + 3);
+      const ventana = lineas.slice(inicio, fin).join(" ");
+
+      const mDecimal = ventana.match(regexDecimal);
+      const mPorcentaje = ventana.match(regexPorcentajeAsistencia);
 
       const tituloCrudo = buscarTituloArriba(lineas, i, 12);
       const materia = limpiarTitulo(tituloCrudo) || `Materia ${materias.length + 1}`;
 
-      materias.push({ materia, notaFinal: notaFinalRaw, asistencia: asistenciaRaw });
+      materias.push({
+        materia,
+        notaFinal: mDecimal ? mDecimal[1].replace(",", ".") : "",
+        asistencia: mPorcentaje ? mPorcentaje[1] : ""
+      });
     });
 
     return materias;
@@ -182,10 +190,11 @@ const OCR = (() => {
 
     let materias = [];
 
-    if (words.length > 0) {
+   if (words.length > 0) {
       const imgWidth = Math.max(...words.map(w => w.bbox.x1), 1000);
       const columnas = reconstruirLineasPorColumna(words, imgWidth);
-      columnas.forEach(lineasColumna => {
+      columnas.forEach((lineasColumna, idx) => {
+        console.log(`--- COLUMNA ${idx} ---`, lineasColumna);
         materias = materias.concat(extraerMateriasDeLineas(lineasColumna));
       });
     }
