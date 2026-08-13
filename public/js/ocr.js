@@ -108,12 +108,12 @@ const OCR = (() => {
   }
 
  function esLimiteEstructural(linea) {
-    // fechas, códigos de horario o "en curso": señal de que ya cruzamos
-    // a los datos de la tarjeta anterior, hay que parar de buscar aquí
     return /\d{2}-\d{2}-\d{4}/.test(linea) ||
       /\bMPS\d?\b/i.test(linea) ||
       /\bMASA\b/i.test(linea) ||
-      /\b(HAD|HPS|HAS)\s*\d/i.test(linea); // exige un número después (código real de horario)
+      /\b(HAD|HPS|HAS)\s*\d/i.test(linea) ||
+      /NOTA\s*FINAL/i.test(linea) ||
+      /ASISTENCIA/i.test(linea);
   }
 
   function buscarTituloArriba(lineas, indice, maxSaltos) {
@@ -134,29 +134,40 @@ const OCR = (() => {
 
   // se ancla en la etiqueta "NOTA FINAL" (confiable) y busca el número
   // decimal y el porcentaje en las líneas cercanas, en cualquier orden
-  function extraerMateriasDeLineas(lineas) {
+ function extraerMateriasDeLineas(lineas) {
     const regexDecimal = /(\d{1,2}[.,]\d{1,2})/;
-    const regexPorcentajeAsistencia = /(?<!\/)(?<!\/\s)(\d{1,3})\s*%/;
+    const regexPorcentaje = /(?<!\/)(?<!\/\s)(\d{1,3})\s*%/;
+    const regexCombinado = /(\d{1,2}[.,]\d{1,2})\D{0,15}?(\d{1,3})\s*%/;
     const materias = [];
+    const vistos = new Set();
 
+    function agregar(notaFinal, asistencia, indiceTitulo) {
+      const clave = `${notaFinal}|${asistencia}`;
+      if (vistos.has(clave)) return;
+      vistos.add(clave);
+      const tituloCrudo = buscarTituloArriba(lineas, indiceTitulo, 8);
+      const materia = limpiarTitulo(tituloCrudo) || `Materia ${materias.length + 1}`;
+      materias.push({ materia, notaFinal, asistencia });
+    }
+
+    // intento 1: número decimal y % juntos en la misma línea
+    lineas.forEach((linea, i) => {
+      if (/\d{2}-\d{2}-\d{4}/.test(linea)) return;
+      const m = linea.match(regexCombinado);
+      if (m) agregar(m[1].replace(",", "."), m[2], i);
+    });
+
+    // intento 2: anclado en "NOTA FINAL", buscando los números en líneas cercanas
     lineas.forEach((linea, i) => {
       if (!/NOTA\s*FINAL/i.test(linea)) return;
-
       const inicio = Math.max(0, i - 6);
       const fin = Math.min(lineas.length, i + 3);
       const ventana = lineas.slice(inicio, fin).join(" ");
-
       const mDecimal = ventana.match(regexDecimal);
-      const mPorcentaje = ventana.match(regexPorcentajeAsistencia);
-
-      const tituloCrudo = buscarTituloArriba(lineas, i, 12);
-      const materia = limpiarTitulo(tituloCrudo) || `Materia ${materias.length + 1}`;
-
-      materias.push({
-        materia,
-        notaFinal: mDecimal ? mDecimal[1].replace(",", ".") : "",
-        asistencia: mPorcentaje ? mPorcentaje[1] : ""
-      });
+      const mPorcentaje = ventana.match(regexPorcentaje);
+      if (mDecimal || mPorcentaje) {
+        agregar(mDecimal ? mDecimal[1].replace(",", ".") : "", mPorcentaje ? mPorcentaje[1] : "", i);
+      }
     });
 
     return materias;
