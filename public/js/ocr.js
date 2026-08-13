@@ -2,15 +2,6 @@
  * ocr.js
  * Lee una captura de pantalla del panel de materias del SGA y extrae:
  * nombre de materia, nota final y % de asistencia.
- *
- * El SGA muestra varias tarjetas en columnas lado a lado, y dentro de
- * cada tarjeta la nota, la asistencia y el mínimo requerido salen
- * juntos en un mismo renglón (ej: "4.55 100% 7/70%"). Este archivo:
- *   1. Reconstruye cada columna usando la posición real de las palabras.
- *   2. Busca, dentro de cada columna, el patrón "número decimal + %"
- *      para sacar nota final y asistencia directamente.
- *   3. Busca el título de la materia unas líneas arriba de ese patrón.
- *
  * por si estas revisando el code, todo corre en el navegador del estudiante — la imagen nunca se sube
  * a ningún servidor.
  */
@@ -21,7 +12,7 @@ const OCR = (() => {
     "EN CURSO", "CURSO", "TEC-INF", "NIVEL", "PARALELO", "MIN.", "NOTA", "FINAL",
     "ASISTENCIA", "FINALIZADO", "APROBADO"
   ];
-  
+
   function normalizar(txt) {
     return txt.trim().toUpperCase();
   }
