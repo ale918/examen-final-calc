@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Estadísticas — Cuánto necesitas</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  body{font-family:'Space Grotesk',sans-serif;background:#0F172A;color:#E5E9F0;padding:32px;margin:0;}
+  h1{font-size:28px;margin-bottom:4px;}
+  .en-vivo{display:flex;align-items:center;gap:12px;background:#111827;border:1px solid #1F2937;border-radius:14px;padding:24px;margin:24px 0;}
+  .punto{width:12px;height:12px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 0 rgba(34,197,94,0.6);animation:pulso 1.5s infinite;}
+  @keyframes pulso{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.6);}70%{box-shadow:0 0 0 10px rgba(34,197,94,0);}100%{box-shadow:0 0 0 0 rgba(34,197,94,0);}}
+  .numero-grande{font-size:48px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+  table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;}
+  th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #1F2937;}
+  th{color:#94A3B8;font-weight:600;font-size:12px;text-transform:uppercase;}
+</style>
+</head>
+<body>
+  <h1>📊 Estadísticas</h1>
+  <p style="color:#94A3B8">Solo tú puedes ver esta página.</p>
+
+  <div class="en-vivo">
+    <div class="punto"></div>
+    <div>
+      <div style="color:#94A3B8;font-size:13px;">conectados ahora mismo</div>
+      <div class="numero-grande" id="conectados">—</div>
+    </div>
+  </div>
+
+  <h2>Últimos 30 días</h2>
+  <table>
+    <thead>
+      <tr><th>Fecha</th><th>Visitas</th><th>Únicos</th><th>OCR éxito</th><th>Subir captura</th><th>Móvil</th><th>Escritorio</th></tr>
+    </thead>
+    <tbody id="tabla-dias"></tbody>
+  </table>
+
+<script>
+  const key = new URLSearchParams(location.search).get("key");
+
+  const socket = io();
+  socket.on("conectados", (n) => {
+    document.getElementById("conectados").textContent = n;
+  });
+
+  fetch(`/api/stats?key=${encodeURIComponent(key)}`)
+    .then(r => r.json())
+    .then(data => {
+      const tbody = document.getElementById("tabla-dias");
+      data.dias.slice().reverse().forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${d.fecha}</td>
+          <td>${d.visitas}</td>
+          <td>${d.sesionesUnicas}</td>
+          <td>${d.ocrExitos}/${d.ocrIntentos}</td>
+          <td>${d.funciones.subirCaptura}</td>
+          <td>${d.dispositivos.movil}</td>
+          <td>${d.dispositivos.escritorio}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{
+  "dias": {
+    "2026-08-16": {
+      "visitas": 2,
+      "sesionesUnicas": [
+        "0f85a984-fda2-4881-8272-681a2e245fb3"
+      ],
+      "ocrIntentos": 1,
+      "ocrExitos": 1,
+      "funciones": {
+        "subirCaptura": 1,
+        "agregarMateria": 0
+      },
+      "dispositivos": {
+        "movil": 0,
+        "escritorio": 2
+      }
+    },
+    "2026-08-18": {
+      "visitas": 1,
+      "sesionesUnicas": [
+        "0f85a984-fda2-4881-8272-681a2e245fb3"
+      ],
+      "ocrIntentos": 0,
+      "ocrExitos": 0,
+      "funciones": {
+        "subirCaptura": 0,
+        "agregarMateria": 0
+      },
+      "dispositivos": {
+        "movil": 0,
+        "escritorio": 1
+      }
+    },
+    "2026-08-19": {
+      "visitas": 0,
+      "sesionesUnicas": [],
+      "ocrIntentos": 1,
+      "ocrExitos": 1,
+      "funciones": {
+        "subirCaptura": 1,
+        "agregarMateria": 0
+      },
+      "dispositivos": {
+        "movil": 0,
+        "escritorio": 0
+      }
+    }
+  }
+}

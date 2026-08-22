@@ -105,7 +105,10 @@ function recalcularTodo() {
 
 notaMinimaEl.addEventListener('input', recalcularTodo);
 asistMinimaEl.addEventListener('input', recalcularTodo);
-btnAgregar.addEventListener('click', () => crearFila());
+btnAgregar.addEventListener('click', () => {
+  crearFila();
+  if (window.trackEvent) trackEvent('agregar_materia');
+});
 
 // ---- Importar desde captura (OCR) ----
 
@@ -139,6 +142,8 @@ async function procesarCaptura(archivo) {
   ocrEstado.className = 'ocr-estado';
   ocrEstado.textContent = '';
   btnSubirCaptura.disabled = true;
+  if (window.trackEvent) trackEvent('subir_captura');
+  if (window.trackEvent) trackEvent('ocr_intento');
 
   try {
     const materias = await OCR.procesarImagen(archivo, (mensaje) => {
@@ -156,6 +161,7 @@ async function procesarCaptura(archivo) {
       fila.classList.add('recien-importada');
     });
 
+    if (window.trackEvent) trackEvent('ocr_exito');
     ocrEstado.className = 'ocr-estado ok';
     ocrEstado.textContent = `Se importaron ${materias.length} materia(s). Revisa que los datos estén correctos antes de calcular.`;
   } catch (err) {
